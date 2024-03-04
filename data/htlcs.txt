@@ -1,0 +1,11 @@
+The Lightning Network utilizes Hashed Timelock Contracts (HTLCs) for secure transactions.
+Uses a decentralized network of nodes to find the most efficient path for a payment.
+Allows payments to pass through multiple nodes to reach the destination.
+Channels are funded with Bitcoin, and the capacity is shared between parties.
+The balance in a channel can be updated many times without blockchain transactions.
+Either party can close a channel, settling the final state on the Bitcoin blockchain.
+To prevent old commitment states from being used to steal funds, third-party services called Watchtowers monitor channels for fraud while parties are offline.
+Various node implementations for the Lightning Network exist, such as LND, c-lightning, and Eclair.
+LND: one of the most popular LN software implementations.
+Atomic swaps allows for the exchange of different cryptocurrencies on the LN without needing a trusted third party.
+Channels are limited to 483 HTLCs per direction because of the maximum transaction size for Bitcoin onchain.

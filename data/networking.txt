@@ -1,0 +1,5 @@
+Nodes are connected via channels.
+There are both public and private channels.
+Nodes sync a local concept of the public network graph by using gossip protocol.
+Public channels are announced via gossip protocol, while private channels are not.
+If a receiver includes a route hint in their invoice, the liquidity in those channels can be utilized by senders.

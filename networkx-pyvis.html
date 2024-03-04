@@ -1,0 +1,349 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 600px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "Lightning network", "label": "Lightning network", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Hashed timelock contracts", "label": "Hashed timelock contracts", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Decentralized network of nodes", "label": "Decentralized network of nodes", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Payments to pass through multiple nodes", "label": "Payments to pass through multiple nodes", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Faster and cheaper transactions than bitcoin blockchain", "label": "Faster and cheaper transactions than bitcoin blockchain", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "2018", "label": "2018", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "A network of nodes connected via payment channels", "label": "A network of nodes connected via payment channels", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "A second-layer protocol on top of bitcoin", "label": "A second-layer protocol on top of bitcoin", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Two parties to transact multiple times without committing all transactions to the bitcoin blockchain", "label": "Two parties to transact multiple times without committing all transactions to the bitcoin blockchain", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Smart contracts (htlcs", "label": "Smart contracts (htlcs", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Bitcoin\u0027s ethos of decentralization", "label": "Bitcoin\u0027s ethos of decentralization", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Channels", "label": "Channels", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Bitcoin", "label": "Bitcoin", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "483 htlcs per direction because of the maximum transaction size for bitcoin onchain", "label": "483 htlcs per direction because of the maximum transaction size for bitcoin onchain", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Nodes", "label": "Nodes", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Balance in a channel", "label": "Balance in a channel", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Many times without blockchain transactions", "label": "Many times without blockchain transactions", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Either party", "label": "Either party", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "A channel", "label": "A channel", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Watchtowers", "label": "Watchtowers", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Channels for fraud", "label": "Channels for fraud", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Various node implementations", "label": "Various node implementations", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "For the lightning network", "label": "For the lightning network", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Lnd", "label": "Lnd", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Most popular ln software implementations", "label": "Most popular ln software implementations", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Atomic swaps", "label": "Atomic swaps", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Exchange of different cryptocurrencies on the ln without needing a trusted third party", "label": "Exchange of different cryptocurrencies on the ln without needing a trusted third party", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Transactions in lightning network", "label": "Transactions in lightning network", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Instantly", "label": "Instantly", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Transaction fees in lightning network", "label": "Transaction fees in lightning network", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Significantly lower compared to on-chain bitcoin transactions", "label": "Significantly lower compared to on-chain bitcoin transactions", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Capacity in lightning network", "label": "Capacity in lightning network", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Btc locked in its channels", "label": "Btc locked in its channels", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Gossip protocol", "label": "Gossip protocol", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Public channels", "label": "Public channels", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Private channels", "label": "Private channels", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Receivers", "label": "Receivers", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Route hints", "label": "Route hints", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Senders", "label": "Senders", "shape": "dot", "size": 10}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "Lightning network", "label": "Utilizes", "title": "Utilizes", "to": "Hashed timelock contracts", "width": 1}, {"arrows": "to", "from": "Lightning network", "label": "Uses", "title": "Uses", "to": "Decentralized network of nodes", "width": 1}, {"arrows": "to", "from": "Lightning network", "label": "Allows", "title": "Allows", "to": "Payments to pass through multiple nodes", "width": 1}, {"arrows": "to", "from": "Lightning network", "label": "Designed for", "title": "Designed for", "to": "Faster and cheaper transactions than bitcoin blockchain", "width": 1}, {"arrows": "to", "from": "Lightning network", "label": "Launched in", "title": "Launched in", "to": "2018", "width": 1}, {"arrows": "to", "from": "Lightning network", "label": "Consists of", "title": "Consists of", "to": "A network of nodes connected via payment channels", "width": 1}, {"arrows": "to", "from": "Lightning network", "label": "Acts as", "title": "Acts as", "to": "A second-layer protocol on top of bitcoin", "width": 1}, {"arrows": "to", "from": "Lightning network", "label": "Allows", "title": "Allows", "to": "Two parties to transact multiple times without committing all transactions to the bitcoin blockchain", "width": 1}, {"arrows": "to", "from": "Lightning network", "label": "Uses", "title": "Uses", "to": "Smart contracts (htlcs", "width": 1}, {"arrows": "to", "from": "Lightning network", "label": "Maintains", "title": "Maintains", "to": "Bitcoin\u0027s ethos of decentralization", "width": 1}, {"arrows": "to", "from": "Channels", "label": "Are funded with", "title": "Are funded with", "to": "Bitcoin", "width": 1}, {"arrows": "to", "from": "Channels", "label": "Are limited to", "title": "Are limited to", "to": "483 htlcs per direction because of the maximum transaction size for bitcoin onchain", "width": 1}, {"arrows": "to", "from": "Channels", "label": "Are connected via", "title": "Are connected via", "to": "Nodes", "width": 1}, {"arrows": "to", "from": "Balance in a channel", "label": "Can be updated", "title": "Can be updated", "to": "Many times without blockchain transactions", "width": 1}, {"arrows": "to", "from": "Either party", "label": "Can close", "title": "Can close", "to": "A channel", "width": 1}, {"arrows": "to", "from": "Watchtowers", "label": "Monitor", "title": "Monitor", "to": "Channels for fraud", "width": 1}, {"arrows": "to", "from": "Various node implementations", "label": "Exist", "title": "Exist", "to": "For the lightning network", "width": 1}, {"arrows": "to", "from": "Lnd", "label": "Is one of", "title": "Is one of", "to": "Most popular ln software implementations", "width": 1}, {"arrows": "to", "from": "Atomic swaps", "label": "Allows", "title": "Allows", "to": "Exchange of different cryptocurrencies on the ln without needing a trusted third party", "width": 1}, {"arrows": "to", "from": "Transactions in lightning network", "label": "Can be settled", "title": "Can be settled", "to": "Instantly", "width": 1}, {"arrows": "to", "from": "Transaction fees in lightning network", "label": "Are", "title": "Are", "to": "Significantly lower compared to on-chain bitcoin transactions", "width": 1}, {"arrows": "to", "from": "Capacity in lightning network", "label": "Is measured by", "title": "Is measured by", "to": "Btc locked in its channels", "width": 1}, {"arrows": "to", "from": "Nodes", "label": "Sync a local concept of the public network graph using", "title": "Sync a local concept of the public network graph using", "to": "Gossip protocol", "width": 1}, {"arrows": "to", "from": "Gossip protocol", "label": "Are announced via", "title": "Are announced via", "to": "Public channels", "width": 1}, {"arrows": "to", "from": "Gossip protocol", "label": "Are not announced via", "title": "Are not announced via", "to": "Private channels", "width": 1}, {"arrows": "to", "from": "Receivers", "label": "Can include", "title": "Can include", "to": "Route hints", "width": 1}, {"arrows": "to", "from": "Route hints", "label": "Can be utilized by", "title": "Can be utilized by", "to": "Senders", "width": 1}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

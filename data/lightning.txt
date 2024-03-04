@@ -1,0 +1,10 @@
+The Lightning Network (LN) is designed to enable faster and cheaper transactions than the Bitcoin blockchain.
+The Lightning Network was launched in 2018.
+It consists of a network of nodes connected via payment channels to facilitate transactions.
+Acts as a second-layer protocol on top of Bitcoin.
+Allows two parties to transact multiple times without committing all transactions to the Bitcoin blockchain.
+Transactions can be settled instantly.
+Significantly lower transaction fees compared to on-chain Bitcoin transactions.
+Capacity is measured in BTC locked in its channels.
+Uses smart contracts (HTLCs) to enforce the rules and secure transactions.
+Maintains Bitcoin's ethos of decentralization.
